@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  PHP_VERSION: '8.2'
+  PHP_VERSION: '8.4'
   DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
 
 jobs:
