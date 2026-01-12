@@ -39,6 +39,92 @@ jobs:
       - name: Install production dependencies
         run: composer install --prefer-dist --no-dev --no-progress --no-interaction --optimize-autoloader
 
+      - name: Create .env file
+        run: |
+          cat > .env << 'ENVFILE'
+          APP_NAME="Genie InfoTech API (Dev)"
+          APP_ENV=local
+          APP_KEY=${{ secrets.APP_KEY_DEV }}
+          APP_DEBUG=true
+          APP_TIMEZONE=Asia/Dhaka
+          APP_URL=https://dev-api.genieinfo.tech
+
+          FRONTEND_URL=https://dev.genieinfo.tech
+
+          LOG_CHANNEL=daily
+          LOG_LEVEL=debug
+
+          DB_CONNECTION=mysql
+          DB_HOST=localhost
+          DB_PORT=3306
+          DB_DATABASE=genieinfo_genie_api_dev
+          DB_USERNAME=genieinfo_genie_api_dev
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_DEV }}
+
+          SESSION_DRIVER=file
+          SESSION_LIFETIME=120
+          CACHE_STORE=file
+          QUEUE_CONNECTION=sync
+
+          MAIL_MAILER=smtp
+          MAIL_HOST=s9623.fra1.stableserver.net
+          MAIL_PORT=465
+          MAIL_USERNAME=noreply@genieinfo.tech
+          MAIL_PASSWORD="${{ secrets.SMTP_PASSWORD }}"
+          MAIL_ENCRYPTION=ssl
+          MAIL_FROM_ADDRESS="noreply@genieinfo.tech"
+          MAIL_FROM_NAME="Genie InfoTech"
+
+          NOTIFICATION_EMAILS="contact@genieinfo.tech,genie.projectmanager@gmail.com"
+
+          SANCTUM_STATEFUL_DOMAINS=dev.genieinfo.tech
+          SESSION_DOMAIN=.genieinfo.tech
+
+          FILAMENT_PATH=admin
+          ENVFILE
+
+      - name: Create post-deploy script
+        run: |
+          cat > public/deploy.php << 'DEPLOYSCRIPT'
+          <?php
+          // Security: Only allow with correct secret
+          $secret = $_GET['secret'] ?? '';
+          $expectedSecret = '${{ secrets.DEPLOY_SECRET }}';
+
+          if ($secret !== $expectedSecret) {
+              http_response_code(403);
+              die('Forbidden');
+          }
+
+          header('Content-Type: text/plain');
+
+          $basePath = dirname(__DIR__);
+          chdir($basePath);
+
+          echo "=== Genie API (Dev) Deployment ===\n\n";
+
+          // Generate key if not set
+          $envContent = file_get_contents('.env');
+          if (strpos($envContent, 'APP_KEY=base64:') === false) {
+              echo "Generating APP_KEY...\n";
+              passthru('php artisan key:generate --force 2>&1');
+          }
+
+          // Run migrations
+          echo "\nRunning migrations...\n";
+          passthru('php artisan migrate --force 2>&1');
+
+          // Clear caches (don't cache in dev for easier debugging)
+          echo "\nClearing caches...\n";
+          passthru('php artisan optimize:clear 2>&1');
+
+          // Set permissions
+          echo "\nSetting permissions...\n";
+          passthru('chmod -R 775 storage bootstrap/cache 2>&1');
+
+          echo "\n=== Dev Deployment Complete ===\n";
+          DEPLOYSCRIPT
+
       - name: Prepare deployment package
         run: |
           mkdir -p deploy
@@ -54,6 +140,7 @@ jobs:
           cp -r storage deploy/
           cp -r vendor deploy/
 
+          cp .env deploy/
           cp artisan deploy/
           cp composer.json deploy/
           cp composer.lock deploy/
@@ -66,6 +153,10 @@ jobs:
           mkdir -p deploy/storage/logs
           mkdir -p deploy/bootstrap/cache
 
+          # Create .htaccess for storage
+          echo "Deny from all" > deploy/storage/.htaccess
+          echo "Deny from all" > deploy/bootstrap/cache/.htaccess
+
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -75,14 +166,17 @@ jobs:
           local-dir: ./deploy/
           server-dir: ./dev-api.genieinfo.tech/
           dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            .env
+
+      - name: Run post-deployment tasks
+        run: |
+          echo "Waiting for FTP sync..."
+          sleep 10
+          echo "Running post-deploy script..."
+          curl -s "https://dev-api.genieinfo.tech/deploy.php?secret=${{ secrets.DEPLOY_SECRET }}" || echo "Deploy script call completed"
 
       - name: Notify deployment success
         if: success()
-        run: echo "Dev deployment to cPanel completed successfully!"
+        run: echo "Dev deployment completed successfully!"
 
       - name: Notify deployment failure
         if: failure()
