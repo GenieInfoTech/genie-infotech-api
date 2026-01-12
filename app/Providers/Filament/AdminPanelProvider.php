@@ -12,8 +12,11 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Support\HtmlString;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -84,6 +87,34 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('full')
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s');
+            ->databaseNotificationsPolling('30s')
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): HtmlString => new HtmlString('
+                    <style>
+                        /* Auth pages background gradient */
+                        .fi-simple-layout {
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                            min-height: 100vh;
+                        }
+
+                        /* Make the auth card stand out */
+                        .fi-simple-main {
+                            background: white;
+                            border-radius: 1rem;
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                        }
+
+                        /* Dark mode adjustments */
+                        .dark .fi-simple-layout {
+                            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%) !important;
+                        }
+
+                        .dark .fi-simple-main {
+                            background: rgb(30 41 59);
+                        }
+                    </style>
+                ')
+            );
     }
 }

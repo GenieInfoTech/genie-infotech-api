@@ -123,6 +123,10 @@ jobs:
           echo "\nRunning migrations...\n";
           passthru('php artisan migrate --force 2>&1');
 
+          // Seed database (uses updateOrCreate, safe to re-run)
+          echo "\nSeeding database...\n";
+          passthru('php artisan db:seed --force 2>&1');
+
           // Clear and cache
           echo "\nOptimizing...\n";
           passthru('php artisan optimize:clear 2>&1');
