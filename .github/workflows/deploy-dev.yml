@@ -11,7 +11,7 @@ env:
   PHP_VERSION: '8.2'
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,76 +43,42 @@ jobs:
         run: |
           mkdir -p deploy
 
-          # Copy application files (exclude dev files)
-          rsync -av --exclude='.git' \
-                    --exclude='.github' \
-                    --exclude='node_modules' \
-                    --exclude='tests' \
-                    --exclude='.env' \
-                    --exclude='.env.example' \
-                    --exclude='phpunit.xml' \
-                    --exclude='README.md' \
-                    --exclude='deploy' \
-                    --exclude='storage/logs/*' \
-                    --exclude='storage/framework/cache/*' \
-                    --exclude='storage/framework/sessions/*' \
-                    --exclude='storage/framework/views/*' \
-                    ./ deploy/
+          # Copy application files
+          cp -r app deploy/
+          cp -r bootstrap deploy/
+          cp -r config deploy/
+          cp -r database deploy/
+          cp -r public deploy/
+          cp -r resources deploy/
+          cp -r routes deploy/
+          cp -r storage deploy/
+          cp -r vendor deploy/
 
-          # Ensure storage directories exist with .gitkeep
+          cp artisan deploy/
+          cp composer.json deploy/
+          cp composer.lock deploy/
+
+          # Ensure storage directories exist
           mkdir -p deploy/storage/app/public
-          mkdir -p deploy/storage/framework/cache
+          mkdir -p deploy/storage/framework/cache/data
           mkdir -p deploy/storage/framework/sessions
           mkdir -p deploy/storage/framework/views
           mkdir -p deploy/storage/logs
           mkdir -p deploy/bootstrap/cache
 
-          touch deploy/storage/app/.gitkeep
-          touch deploy/storage/framework/cache/.gitkeep
-          touch deploy/storage/framework/sessions/.gitkeep
-          touch deploy/storage/framework/views/.gitkeep
-          touch deploy/storage/logs/.gitkeep
-          touch deploy/bootstrap/cache/.gitkeep
-
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME_API_DEV }}
-          password: ${{ secrets.FTP_PASSWORD_API_DEV }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./deploy/
           server-dir: ./dev-api.genieinfo.tech/
           dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
-            **/node_modules/**
             .env
-
-      - name: Run post-deployment commands via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            cd ~/dev-api.genieinfo.tech
-
-            # Run migrations
-            php artisan migrate --force
-
-            # Clear and rebuild caches
-            php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan optimize
-
-            # Set permissions
-            chmod -R 775 storage bootstrap/cache
-
-            echo "Dev deployment completed!"
 
       - name: Notify deployment success
         if: success()
