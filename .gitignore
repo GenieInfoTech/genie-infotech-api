@@ -1,0 +1,62 @@
+# Laravel Framework
+/vendor/
+
+# SQLite database (development only)
+/database/*.sqlite
+/database/*.sqlite-journal
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment files (NEVER commit these)
+.env
+.env.backup
+.env.production
+.env.local
+
+# IDE and Editor
+/.idea
+/.fleet
+/.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+/public/hot
+/public/storage
+/storage/*.key
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
+
+# Compiled files
+*.compiled.php
+
+# Testing
+.phpunit.result.cache
+/phpunit.xml
+coverage/
+
+# Homestead
+Homestead.json
+Homestead.yaml
+
+# Docker
+docker-compose.override.yml
+
+# Deployment
+/deploy/
+
+# Misc
+*.log
+*.cache
+.php-cs-fixer.cache

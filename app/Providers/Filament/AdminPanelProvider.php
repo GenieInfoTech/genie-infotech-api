@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Providers\Filament;
+
+use App\Filament\Pages\Dashboard;
+use App\Http\Middleware\SecurityHeaders;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
+use Filament\Pages;
+use Filament\Panel;
+use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
+use Filament\Widgets;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\AuthenticateSession;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+class AdminPanelProvider extends PanelProvider
+{
+    public function panel(Panel $panel): Panel
+    {
+        return $panel
+            ->default()
+            ->id('admin')
+            ->path(env('FILAMENT_PATH', 'admin'))
+            ->login()
+            ->passwordReset()
+            ->emailVerification()
+            ->profile()
+            ->colors([
+                'primary' => Color::Blue,
+                'danger' => Color::Rose,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+            ])
+            ->font('Inter')
+            ->brandName('Genie InfoTech')
+            ->brandLogo(asset('images/logo.png'))
+            ->darkModeBrandLogo(asset('images/logo.png'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(asset('images/logo-icon.png'))
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Lead Management'),
+                NavigationGroup::make()
+                    ->label('Content'),
+                NavigationGroup::make()
+                    ->label('Settings'),
+            ])
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->pages([
+                Dashboard::class,
+            ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->widgets([
+                Widgets\AccountWidget::class,
+            ])
+            ->middleware([
+                EncryptCookies::class,
+                AddQueuedCookiesToResponse::class,
+                StartSession::class,
+                AuthenticateSession::class,
+                ShareErrorsFromSession::class,
+                VerifyCsrfToken::class,
+                SubstituteBindings::class,
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+                SecurityHeaders::class,
+            ])
+            ->authMiddleware([
+                Authenticate::class,
+            ])
+            // Security configurations
+            ->authGuard('web')
+            ->revealablePasswords(false) // Don't allow password peek
+            // ->spa() // Disabled for compatibility testing
+            ->sidebarCollapsibleOnDesktop()
+            ->maxContentWidth('full')
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s');
+    }
+}
