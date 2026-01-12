@@ -18,8 +18,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create bootstrap cache directory
-        run: mkdir -p bootstrap/cache
+      - name: Create Laravel directories
+        run: |
+          mkdir -p bootstrap/cache
+          mkdir -p storage/framework/cache/data
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
