@@ -88,10 +88,29 @@ class BlogPostResource extends Resource
                             ->icon('heroicon-o-photo')
                             ->schema([
                                 Forms\Components\FileUpload::make('cover_image')
+                                    ->label('Cover Image')
                                     ->image()
+                                    ->disk('public')
                                     ->directory('blog-covers')
+                                    ->visibility('public')
                                     ->maxSize(2048)
+                                    ->imagePreviewHeight('350')
                                     ->imageEditor()
+                                    ->imageEditorAspectRatios([
+                                        '16:9',
+                                        '4:3',
+                                        '1:1',
+                                    ])
+                                    ->imageEditorMode(2)
+                                    ->imageEditorViewportWidth('1920')
+                                    ->imageEditorViewportHeight('1080')
+                                    ->panelAspectRatio('16:9')
+                                    ->panelLayout('integrated')
+                                    ->removeUploadedFileButtonPosition('right')
+                                    ->uploadButtonPosition('left')
+                                    ->uploadProgressIndicatorPosition('left')
+                                    ->downloadable()
+                                    ->openable()
                                     ->columnSpanFull(),
                             ]),
 
@@ -210,6 +229,7 @@ class BlogPostResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('cover_image')
                     ->label('Cover')
+                    ->disk('public')
                     ->circular()
                     ->size(40),
                 Tables\Columns\TextColumn::make('title')
