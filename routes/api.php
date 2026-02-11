@@ -32,9 +32,27 @@ Route::middleware(['throttle:api'])->group(function () {
 
     // Blog endpoints (public read-only)
     Route::prefix('blog')->group(function () {
+        // Post listing and search
         Route::get('/', [BlogController::class, 'index']);
+        Route::get('/featured', [BlogController::class, 'featured']);
+        Route::get('/popular', [BlogController::class, 'popular']);
+        Route::get('/recent', [BlogController::class, 'recent']);
+        Route::get('/trending', [BlogController::class, 'trending']);
+        
+        // Categories and tags
         Route::get('/categories', [BlogController::class, 'categories']);
+        Route::get('/category/{slug}', [BlogController::class, 'byCategory']);
+        Route::get('/tags', [BlogController::class, 'tags']);
+        Route::get('/tag/{slug}', [BlogController::class, 'byTag']);
+        
+        // SEO and feeds
+        Route::get('/sitemap', [BlogController::class, 'sitemap']);
+        Route::get('/rss', [BlogController::class, 'rss']);
+        
+        // Single post and related
         Route::get('/{slug}', [BlogController::class, 'show']);
+        Route::get('/{slug}/comments', [BlogController::class, 'comments']);
+        Route::post('/{slug}/share', [BlogController::class, 'share']);
     });
 
     // Lead capture (with honeypot protection)
@@ -62,6 +80,12 @@ Route::post('/auth/logout', [AuthController::class, 'logout'])
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Current user
     Route::get('/user', fn (Request $request) => $request->user());
+
+    // Blog - authenticated actions
+    Route::prefix('blog')->group(function () {
+        Route::post('/{slug}/comments', [BlogController::class, 'storeComment']);
+        Route::post('/{slug}/like', [BlogController::class, 'like']);
+    });
 
     // Leads management (admin only)
     Route::middleware(['admin'])->group(function () {
