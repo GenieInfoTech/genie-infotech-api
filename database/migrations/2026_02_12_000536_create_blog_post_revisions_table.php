@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('excerpt')->nullable();
             $table->longText('content');
             $table->integer('revision_number');
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
             
             $table->index(['post_id', 'revision_number']);
         });

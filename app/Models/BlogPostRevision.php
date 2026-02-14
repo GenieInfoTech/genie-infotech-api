@@ -14,6 +14,7 @@ class BlogPostRevision extends Model
         'excerpt',
         'content',
         'revision_number',
+        'created_at',
     ];
 
     public $timestamps = false;
