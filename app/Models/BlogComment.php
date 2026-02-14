@@ -61,4 +61,28 @@ class BlogComment extends Model
     {
         return $query->whereNull('parent_id');
     }
+
+    /**
+     * Get the author name (from user or guest data)
+     */
+    public function getAuthorName(): string
+    {
+        return $this->user ? $this->user->name : $this->author_name;
+    }
+
+    /**
+     * Get the author email (from user or guest data)
+     */
+    public function getAuthorEmail(): ?string
+    {
+        return $this->user ? $this->user->email : $this->author_email;
+    }
+
+    /**
+     * Check if comment is from a registered user
+     */
+    public function isRegisteredUser(): bool
+    {
+        return $this->user_id !== null;
+    }
 }

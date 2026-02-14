@@ -220,22 +220,55 @@ class BlogController extends Controller
         
         $comments = $post->comments()
             ->approved()
-            ->with('author')
+            ->with(['user', 'replies.user'])
+            ->root()
             ->oldest()
-            ->get();
+            ->get()
+            ->map(function ($comment) {
+                return [
+                    'id' => $comment->id,
+                    'content' => $comment->content,
+                    'author_name' => $comment->getAuthorName(),
+                    'is_registered_user' => $comment->isRegisteredUser(),
+                    'created_at' => $comment->created_at,
+                    'replies' => $comment->replies->map(function ($reply) {
+                        return [
+                            'id' => $reply->id,
+                            'content' => $reply->content,
+                            'author_name' => $reply->getAuthorName(),
+                            'is_registered_user' => $reply->isRegisteredUser(),
+                            'created_at' => $reply->created_at,
+                        ];
+                    }),
+                ];
+            });
 
-        return response()->json(['data' => $comments]);
+        return response()->json([
+            'success' => true,
+            'data' => $comments,
+        ]);
     }
 
     /**
-     * Post a comment (requires authentication)
+     * Post a comment (authenticated or guest)
      */
     public function storeComment(string $slug, Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $isAuthenticated = Auth::check();
+
+        // Validation rules depend on authentication status
+        $rules = [
             'content' => 'required|string|min:3|max:1000',
             'parent_id' => 'nullable|exists:blog_comments,id',
-        ]);
+        ];
+
+        // Guest users must provide name and email
+        if (!$isAuthenticated) {
+            $rules['name'] = 'required|string|max:255';
+            $rules['email'] = 'required|email|max:255';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -247,16 +280,37 @@ class BlogController extends Controller
             return response()->json(['message' => 'Comments are disabled for this post'], 403);
         }
 
-        $comment = $post->comments()->create([
-            'user_id' => Auth::id(),
+        $commentData = [
             'content' => $request->content,
             'parent_id' => $request->parent_id,
             'status' => 'pending', // Requires moderation
-        ]);
+            'author_ip' => $request->ip(),
+        ];
+
+        if ($isAuthenticated) {
+            // Authenticated user comment
+            $commentData['user_id'] = Auth::id();
+        } else {
+            // Guest comment
+            $commentData['author_name'] = $request->name;
+            $commentData['author_email'] = $request->email;
+        }
+
+        $comment = $post->comments()->create($commentData);
+
+        // Load relationships for response
+        $comment->load('user');
 
         return response()->json([
+            'success' => true,
             'message' => 'Comment submitted successfully and is pending moderation',
-            'comment' => $comment,
+            'data' => [
+                'id' => $comment->id,
+                'content' => $comment->content,
+                'author_name' => $comment->getAuthorName(),
+                'status' => $comment->status,
+                'created_at' => $comment->created_at,
+            ],
         ], 201);
     }
 

@@ -52,6 +52,7 @@ Route::middleware(['throttle:api'])->group(function () {
         // Single post and related
         Route::get('/{slug}', [BlogController::class, 'show']);
         Route::get('/{slug}/comments', [BlogController::class, 'comments']);
+        Route::post('/{slug}/comments', [BlogController::class, 'storeComment']); // Supports auth & guest
         Route::post('/{slug}/share', [BlogController::class, 'share']);
     });
 
@@ -66,6 +67,7 @@ Route::middleware(['throttle:api'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['throttle.login'])->group(function () {
+    Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
 });
 
@@ -83,7 +85,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // Blog - authenticated actions
     Route::prefix('blog')->group(function () {
-        Route::post('/{slug}/comments', [BlogController::class, 'storeComment']);
         Route::post('/{slug}/like', [BlogController::class, 'like']);
     });
 
