@@ -174,10 +174,20 @@ class BlogCacheService
      */
     public function clearListCaches(): void
     {
-        Cache::forget('blog.posts.*');
-        Cache::forget('blog.featured.*');
-        Cache::forget('blog.popular.*');
-        Cache::forget('blog.recent.*');
+        // Cache::forget doesn't support wildcards - clear specific known keys
+        foreach ([3, 5, 10] as $limit) {
+            Cache::forget("blog.featured.limit_{$limit}");
+            Cache::forget("blog.popular.limit_{$limit}");
+            Cache::forget("blog.recent.limit_{$limit}");
+        }
+
+        // Clear paginated post caches (first 10 pages)
+        foreach (range(1, 10) as $page) {
+            foreach ([10, 12, 15, 20] as $perPage) {
+                Cache::forget("blog.posts.page_{$page}.per_{$perPage}");
+            }
+        }
+
         Cache::forget('blog.categories');
     }
 
