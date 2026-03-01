@@ -52,8 +52,9 @@ class SecurityHeaders
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " .
                 "style-src 'self' 'unsafe-inline' https://fonts.bunny.net; " .
                 "font-src 'self' https://fonts.bunny.net; " .
-                "img-src 'self' data: blob:; " .
+                "img-src 'self' data: blob: https://ui-avatars.com; " .
                 "connect-src 'self'; " .
+                "worker-src 'self' blob:; " .
                 "frame-ancestors 'self';"
             );
         }
