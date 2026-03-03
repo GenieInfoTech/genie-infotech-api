@@ -113,6 +113,27 @@ class AdminPanelProvider extends PanelProvider
                         .dark .fi-simple-main {
                             background: rgb(30 41 59);
                         }
+
+                        /* Sticky rich text editor toolbar */
+                        .fi-fo-rich-editor trix-toolbar {
+                            position: sticky !important;
+                            top: 0 !important;
+                            z-index: 40 !important;
+                            padding: 0.5rem 0 !important;
+                            border-bottom: 1px solid rgba(128, 128, 128, 0.2) !important;
+                        }
+
+                        .fi-fo-rich-editor trix-toolbar .trix-button-row {
+                            background: rgb(30 41 59) !important;
+                            border-radius: 0.5rem !important;
+                            padding: 0.25rem !important;
+                        }
+
+                        /* Ensure the main content area scrolls, not the whole page */
+                        .fi-fo-rich-editor trix-editor {
+                            max-height: 70vh !important;
+                            overflow-y: auto !important;
+                        }
                     </style>
                 ')
             );

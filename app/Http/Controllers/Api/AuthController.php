@@ -42,18 +42,6 @@ class AuthController extends Controller
             ]);
         }
 
-        // Check if user is admin
-        if (!$user->is_admin) {
-            Log::warning('Non-admin login attempt', [
-                'user_id' => $user->id,
-                'ip' => $request->ip(),
-            ]);
-
-            throw ValidationException::withMessages([
-                'email' => ['You do not have permission to access this resource.'],
-            ]);
-        }
-
         // Update login info
         $user->updateLoginInfo($request->ip());
 
@@ -77,6 +65,54 @@ class AuthController extends Controller
                 'is_admin' => $user->is_admin,
             ],
         ]);
+    }
+
+    /**
+     * Register a new user account
+     *
+     * SECURITY:
+     * - Email validation
+     * - Strong password requirements
+     * - IP logging
+     */
+    public function register(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email|max:255',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => strtolower($request->email),
+            'password' => Hash::make($request->password),
+            'is_admin' => false,
+            'last_login_ip' => $request->ip(),
+            'last_login_at' => now(),
+        ]);
+
+        // Create token
+        $deviceName = $request->device_name ?? 'api-token';
+        $token = $user->createToken($deviceName, ['*'], now()->addHours(24));
+
+        Log::info('New user registered', [
+            'user_id' => $user->id,
+            'ip' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registration successful',
+            'token' => $token->plainTextToken,
+            'expires_at' => $token->accessToken->expires_at,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'is_admin' => $user->is_admin,
+            ],
+        ], 201);
     }
 
     /**
