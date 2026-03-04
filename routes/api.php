@@ -42,6 +42,7 @@ Route::middleware(['throttle:api'])->group(function () {
         // Categories and tags
         Route::get('/categories', [BlogController::class, 'categories']);
         Route::get('/category/{slug}', [BlogController::class, 'byCategory']);
+        Route::get('/author/{slug}', [BlogController::class, 'byAuthor']);
         Route::get('/tags', [BlogController::class, 'tags']);
         Route::get('/tag/{slug}', [BlogController::class, 'byTag']);
         
