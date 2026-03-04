@@ -5,8 +5,10 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -25,6 +27,14 @@ class User extends Authenticatable implements FilamentUser
         'is_admin',
         'last_login_at',
         'last_login_ip',
+        'slug',
+        'avatar',
+        'bio',
+        'job_title',
+        'website_url',
+        'twitter_url',
+        'linkedin_url',
+        'github_url',
     ];
 
     /**
@@ -33,6 +43,12 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+        'is_admin',
+        'email_verified_at',
+        'last_login_at',
+        'last_login_ip',
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -67,6 +83,34 @@ class User extends Authenticatable implements FilamentUser
             ->logOnly(['name', 'email', 'is_admin'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * Boot method for auto-generating slug
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->slug)) {
+                $user->slug = Str::slug($user->name);
+            }
+        });
+
+        static::updating(function ($user) {
+            if ($user->isDirty('name') && !$user->isDirty('slug')) {
+                $user->slug = Str::slug($user->name);
+            }
+        });
+    }
+
+    /**
+     * Get posts authored by this user
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(BlogPost::class, 'author_id');
     }
 
     /**

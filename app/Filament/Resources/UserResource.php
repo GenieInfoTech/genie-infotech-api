@@ -54,6 +54,53 @@ class UserResource extends Resource
                             ->columnSpan(1),
                     ])->columns(2),
 
+                Forms\Components\Section::make('Author Profile')
+                    ->description('Public author profile shown on blog posts and author pages')
+                    ->schema([
+                        Forms\Components\TextInput::make('slug')
+                            ->label('URL Slug')
+                            ->helperText('Auto-generated from name. Used in /blog/author/{slug}')
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('job_title')
+                            ->label('Job Title')
+                            ->placeholder('e.g. Senior Developer')
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        Forms\Components\FileUpload::make('avatar')
+                            ->label('Avatar')
+                            ->image()
+                            ->directory('avatars')
+                            ->columnSpan(2),
+                        Forms\Components\Textarea::make('bio')
+                            ->label('Biography')
+                            ->rows(3)
+                            ->maxLength(1000)
+                            ->columnSpan(2),
+                        Forms\Components\TextInput::make('website_url')
+                            ->label('Website URL')
+                            ->url()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('twitter_url')
+                            ->label('Twitter / X URL')
+                            ->url()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('linkedin_url')
+                            ->label('LinkedIn URL')
+                            ->url()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('github_url')
+                            ->label('GitHub URL')
+                            ->url()
+                            ->maxLength(255)
+                            ->columnSpan(1),
+                    ])->columns(2)
+                    ->collapsible(),
+
                 Forms\Components\Section::make('Activity Information')
                     ->schema([
                         Forms\Components\Placeholder::make('last_login_at')
