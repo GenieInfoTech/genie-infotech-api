@@ -7,6 +7,7 @@ use App\Models\BlogCategory;
 use App\Models\BlogPost;
 use App\Models\BlogTag;
 use App\Models\BlogComment;
+use App\Models\User;
 use App\Services\BlogAnalyticsService;
 use App\Services\BlogCacheService;
 use App\Services\SchemaGenerator;
@@ -41,7 +42,7 @@ class BlogController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = BlogPost::published()
-            ->with(['author:id,name', 'category:id,name,slug'])
+            ->with(['author', 'category:id,name,slug'])
             ->select([
                 'id', 'title', 'slug', 'excerpt', 'cover_image',
                 'author_id', 'category_id', 'published_at', 'views',
@@ -89,7 +90,7 @@ class BlogController extends Controller
     public function show(string $slug, Request $request): JsonResponse
     {
         $post = BlogPost::published()
-            ->with(['author:id,name', 'category:id,name,slug', 'tags', 'media', 'seo'])
+            ->with(['author', 'category:id,name,slug', 'tags', 'media', 'seo'])
             ->where('slug', $slug)
             ->firstOrFail();
 
@@ -133,6 +134,39 @@ class BlogController extends Controller
 
         return response()->json([
             'category' => $category,
+            'posts' => $posts,
+        ]);
+    }
+
+    /**
+     * Get posts by author
+     */
+    public function byAuthor(string $slug, Request $request): JsonResponse
+    {
+        $author = User::where('slug', $slug)->firstOrFail();
+        $perPage = min($request->get('per_page', 15), 50);
+
+        $posts = BlogPost::published()
+            ->where('author_id', $author->id)
+            ->with(['category', 'tags'])
+            ->latest('published_at')
+            ->paginate($perPage);
+
+        return response()->json([
+            'author' => [
+                'id' => $author->id,
+                'name' => $author->name,
+                'email' => $author->email,
+                'slug' => $author->slug,
+                'avatar' => $author->avatar,
+                'bio' => $author->bio,
+                'job_title' => $author->job_title,
+                'website_url' => $author->website_url,
+                'twitter_url' => $author->twitter_url,
+                'linkedin_url' => $author->linkedin_url,
+                'github_url' => $author->github_url,
+                'posts_count' => $posts->total(),
+            ],
             'posts' => $posts,
         ]);
     }
